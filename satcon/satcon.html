@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>ASQ v1</title>
+    <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    defer
+    ></script>
+</head>
+<body>
+    <div id="map" style="height: 100vh; width: 100vw;"></div>
+	<!-- Satellite category dropdown -->
+	<select id="dropdown" style="visibility: hidden;">
+		<option value="0">-- Select an option --</option>
+	</select>
+
+	<!-- Results table -->
+	<table id="sat-table" border="1" cellpadding="6" cellspacing="0" style="visibility: hidden;">
+		<thead>
+			<tr>
+				<th>Sat ID</th>
+				<th>Name</th>
+				<th>Altitude (km)</th>
+				<th>Latitude</th>
+				<th>Longitude</th>
+				<th>Launch Date</th>
+				<th>International Designator</th>
+			</tr>
+		</thead>
+		<tbody></tbody>
+	</table>
+
+	<script>
+        /* =========================
+		   Leaflet
+		========================= */
+        let map;
+        let userMarker;
+        let satelliteLayer;
+        let satelliteIcon;
+
+        function autoLocateUser() {
+            if (!("geolocation" in navigator)) {
+                alert("Geolocation not supported by this browser.");
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    SearchLat = position.coords.latitude;
+                    SearchLng = position.coords.longitude;
+                    console.log("Latitude: " + SearchLat + "\nLongitude: " + SearchLng + "\nInitializing Leaflet's map...");
+                    initMap(SearchLat, SearchLng);
+
+                    // Open the category dropdown automatically
+                    dropdown.focus();
+
+                },
+                error => {
+                    alert("Location access is required for this demo.");
+                    console.error(error);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        }
+
+        function initMap(lat, lng) {
+            if (!map) {
+                map = L.map("map").setView([lat, lng], 18);
+
+                L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                    attribution: "&copy; OpenStreetMap contributors"
+                }).addTo(map);
+
+                userMarker = L.marker([lat, lng])
+                    .addTo(map)
+                    .bindPopup("Your location")
+                    .openPopup();
+
+				satelliteIcon = L.icon({
+					iconUrl: 'satellite.png',
+					iconSize: [128, 128],
+					iconAnchor: [64, 64],
+					popupAnchor: [0, -64]
+				});
+            } else {
+                map.setView([lat, lng], 13);
+                userMarker.setLatLng([lat, lng]);
+            }
+
+            fetchSatellites();
+        }
+
+        function plotSatellitesOnMap(satellites) {
+			if (!map) return;
+
+			// Remove previous satellite markers
+			if (satelliteLayer) {
+				map.removeLayer(satelliteLayer);
+			}
+
+			satelliteLayer = L.layerGroup();
+
+			const bounds = []; // to collect all marker positions
+
+			satellites.forEach(sat => {
+				if (typeof sat.satlat !== "number" || typeof sat.satlng !== "number") return;
+
+				const marker = L.marker([sat.satlat, sat.satlng], { icon: satelliteIcon })
+					.bindPopup(`
+						<strong>${sat.satname}</strong><br>
+						Latitude:${sat.satlat}<br>
+						Longitude:${sat.satlng}<br>
+						Altitude: ${sat.satalt.toFixed(1)} km<br><br>
+						ID: ${sat.satid}<br>
+						Launch Date: ${sat.launchDate}<br><br>
+						Country of Origin: (Pending)<br>
+						Purpose: (Pending)<br>
+					`);
+
+				satelliteLayer.addLayer(marker);
+				bounds.push([sat.satlat, sat.satlng]); // add marker to bounds
+			});
+
+			satelliteLayer.addTo(map);
+
+			// Also include the user's location if available
+			if (userMarker) {
+				bounds.push(userMarker.getLatLng());
+			}
+
+			if (bounds.length > 0) {
+				map.fitBounds(bounds, { padding: [50, 50] }); // fit all markers, add padding
+			}
+		}
+		/* =========================
+		   Search / Location State
+		========================= */
+		let SearchLat = 0;
+		let SearchLng = 0;
+
+		/* =========================
+		   DOM References
+		========================= */
+		const dropdown = document.getElementById("dropdown");
+
+		/* =========================
+		   Satellite Categories
+		========================= */
+		const categories = new Map([
+			[1, "Brightest"],
+			[2, "ISS"],
+			[3, "Weather"],
+			[4, "NOAA"],
+			[5, "GOES"],
+			[6, "Earth resources"],
+			[7, "Search & rescue"],
+			[8, "Disaster monitoring"],
+			[9, "Tracking and Data Relay Satellite System"],
+			[10, "Geostationary"],
+			[11, "Intelsat"],
+			[12, "Gorizont"],
+			[13, "Raduga"],
+			[14, "Molniya"],
+			[15, "Iridium"],
+			[16, "Orbcomm"],
+			[17, "Globalstar"],
+			[18, "Amateur radio"],
+			[19, "Experimental"],
+			[20, "Global Positioning System (GPS) Operational"],
+			[21, "Glonass Operational"],
+			[22, "Galileo"],
+			[23, "Satellite-Based Augmentation System"],
+			[24, "Navy Navigation Satellite System"],
+			[25, "Russian LEO Navigation"],
+			[26, "Space & Earth Science"],
+			[27, "Geodetic"],
+			[28, "Engineering"],
+			[29, "Education"],
+			[30, "Military"],
+			[31, "Radar Calibration"],
+			[32, "CubeSats"],
+			[33, "XM and Sirius"],
+			[34, "TV"],
+			[35, "Beidou Navigation System"],
+			[36, "Yaogan"],
+			[37, "Westford Needles"],
+			[38, "Parus"],
+			[39, "Strela"],
+			[40, "Gonets"],
+			[41, "Tsiklon"],
+			[42, "Tsikada"],
+			[43, "O3B Networks"],
+			[44, "Tselina"],
+			[45, "Celestis"],
+			[46, "IRNSS"],
+			[47, "QZSS"],
+			[48, "Flock"],
+			[49, "Lemur"],
+			[50, "Global Positioning System (GPS) Constellation"],
+			[51, "Glonass Constellation"],
+			[52, "Starlink"],
+			[53, "OneWeb"],
+			[54, "Chinese Space Station"],
+			[55, "Qianfan"],
+			[56, "Kuiper"],
+			[57, "GeeSAT"]
+		]);
+
+		/* =========================
+		   Table Rendering Helpers
+		========================= */
+
+		// Show loading message
+		function prepareRenderTable() {
+			const tbody = document.querySelector("#sat-table tbody");
+			tbody.innerHTML = "";
+
+			const row = document.createElement("tr");
+			const cell = document.createElement("td");
+
+			cell.colSpan = 7;
+			cell.textContent = "Searching your aerospace for satellites...";
+
+			row.appendChild(cell);
+			tbody.appendChild(row);
+		}
+
+		// Render satellite results
+		function renderTable(satellites) {
+			const tbody = document.querySelector("#sat-table tbody");
+			tbody.innerHTML = "";
+
+			if (!satellites || satellites.length === 0) {
+				const row = document.createElement("tr");
+				const cell = document.createElement("td");
+
+				cell.colSpan = 7;
+				cell.textContent = "No satellites found.";
+
+				row.appendChild(cell);
+				tbody.appendChild(row);
+				return;
+			}
+
+			satellites.forEach(sat => {
+				const row = document.createElement("tr");
+
+				row.innerHTML = `
+					<td>${sat.satid}</td>
+					<td>${sat.satname}</td>
+					<td>${sat.satalt}</td>
+					<td>${sat.satlat}</td>
+					<td>${sat.satlng}</td>
+					<td>${sat.launchDate}</td>
+					<td>${sat.intDesignator}</td>
+				`;
+
+				console.log(row.innerHTML);
+				tbody.appendChild(row);
+			});
+		}
+
+		/* =========================
+		   Dropdown Setup
+		========================= */
+		let selectedCategory = "";
+
+		populateCategories();
+
+		function populateCategories() {
+			categories.forEach((text, value) => {
+				const option = document.createElement("option");
+				option.value = value;
+				option.textContent = text;
+				dropdown.appendChild(option);
+			});
+
+			dropdown.addEventListener("change", e => {
+                selectedCategory = e.target.value;
+
+                if (!selectedCategory) return;
+                if (SearchLat === 0 || SearchLng === 0) return;
+
+                fetchSatellites();
+            });
+		}
+
+		/* =========================
+		   Events
+		========================= */
+
+
+        // Autorun
+        window.addEventListener("load", () => {
+            autoLocateUser();
+        });
+
+		/* =========================
+		   API Fetch Logic
+		========================= */
+		async function fetchSatellites() {
+            // Satellite Category 0 = ANY
+            // Defaulting to all satellites due to significantly decreased search radius
+            prepareRenderTable();
+            const url =
+                `https://roguegamestudio-api.rickeshsingh0.workers.dev/` +
+                `?lat=${SearchLat}&lng=${SearchLng}&cat=0`;
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log(data);
+                renderTable(data.above);
+                plotSatellitesOnMap(data.above);
+
+            } catch (error) {
+                console.error("An error occurred while fetching satellites:", error);
+            }
+        }
+	</script>
+
+</body>
+</html>
