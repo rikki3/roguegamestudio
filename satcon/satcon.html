@@ -3,7 +3,6 @@
 <style>
 #status-overlay {
     position: absolute;
-    top: 12px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 9999;
@@ -236,7 +235,7 @@
 						Launch Date: ${sat.launchDate}<br><br>
 						Country of Origin: (Pending)<br>
 						Purpose: (Pending)<br>
-					`, { autoPan: true, autoPanPadding: [80, 80] });
+					`, { autoPan: true, autoPanPadding: [175, 175] });
 
 				satelliteLayer.addLayer(marker);
 				bounds.push([sat.satlat, sat.satlng]);
