@@ -7,7 +7,7 @@
     left: 50%;
     transform: translateX(-50%);
     z-index: 9999;
-	margin-top:1vh;
+	height:5vh;
 
     background: rgba(0, 0, 0, 0.7);
     color: #fff;
@@ -75,7 +75,7 @@
 		<button id="refresh-btn" style="display:none;">↻ Refresh</button>
 	</div>
     <div id="map" style="height: 103vh; width: 103vw;margin-left: -3vw;margin-top:-3vh"></div>
-	<button id="show-overlay-btn" style="font-size: 18px;margin-top:2vh;">Hide</button>
+	<button id="show-overlay-btn" style="font-size: 21px;margin-top:2.25vh;">Hide</button>
 	<!-- Satellite category dropdown -->
 	<select id="dropdown" style="visibility: hidden;">
 		<option value="0">-- Select an option --</option>
@@ -170,6 +170,7 @@
 			showStatus("🌐📌Provide permission to initiate geolocation...");
             navigator.geolocation.getCurrentPosition(
                 position => {
+					showStatus("🌐📌Geolocating...");
                     SearchLat = position.coords.latitude;
                     SearchLng = position.coords.longitude;
                     console.log("Latitude: " + SearchLat + "\nLongitude: " + SearchLng + "\nInitializing Leaflet's map...");
@@ -235,7 +236,7 @@
 						Launch Date: ${sat.launchDate}<br><br>
 						Country of Origin: (Pending)<br>
 						Purpose: (Pending)<br>
-					`, { autoPan: true, autoPanPadding: [40, 40] });
+					`, { autoPan: true, autoPanPadding: [80, 80] });
 
 				satelliteLayer.addLayer(marker);
 				bounds.push([sat.satlat, sat.satlng]);
