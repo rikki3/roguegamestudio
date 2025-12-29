@@ -13,15 +13,15 @@
     defer
     ></script>
 </head>
-<body>
-    <div id="map" style="height: 100vh; width: 100vw;"></div>
+<body style="overflow: hidden;">
+    <div id="map" style="height: 103vh; width: 103vw;margin-left: -2vw;margin-top: -2vh;"></div>
 	<!-- Satellite category dropdown -->
 	<select id="dropdown" style="visibility: hidden;">
 		<option value="0">-- Select an option --</option>
 	</select>
 
 	<!-- Results table -->
-	<table id="sat-table" border="1" cellpadding="6" cellspacing="0" style="visibility: hidden;">
+	<table id="sat-table" cellpadding="6" cellspacing="0" style="visibility: hidden;">
 		<thead>
 			<tr>
 				<th>Sat ID</th>
