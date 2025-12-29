@@ -2,14 +2,12 @@
 <html lang="en">
 <style>
 #status-overlay {
-	overlay: none;
     position: absolute;
     top: 12px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 9999;
-	height:25vh;
-	margin-top: -12px;
+	height:5vh;
 
     background: rgba(0, 0, 0, 0.7);
     color: #fff;
@@ -72,7 +70,7 @@
     ></script>
 </head>
 <body style="width: 100vw;height: 100vh;overflow: hidden; position: relative;">
-	<div style="display: flex;align-items: center;width: 100%;font-size: 24px;" id="status-overlay">
+	<div style="display: flex;align-items: center;width: 100%;font-size: 20px;" id="status-overlay">
 		<span id="status-text">🛰 Searching satellites…</span>
 		<button id="refresh-btn" style="display:none;">↻ Refresh</button>
 	</div>
@@ -238,7 +236,7 @@
 						Launch Date: ${sat.launchDate}<br><br>
 						Country of Origin: (Pending)<br>
 						Purpose: (Pending)<br>
-					`, { autoPan: true, autoPanPadding: [175, 175] });
+					`, { autoPan: true, autoPanPadding: [130, 130] });
 
 				satelliteLayer.addLayer(marker);
 				bounds.push([sat.satlat, sat.satlng]);
