@@ -13,8 +13,8 @@
     defer
     ></script>
 </head>
-<body style="overflow: hidden;">
-    <div id="map" style="height: 103vh; width: 103vw;margin-left: -2vw;margin-top: -2vh;"></div>
+<body style="width: 100vw;height: 100vh;overflow: hidden;">
+    <div id="map" style="height: 103vh; width: 103vw;margin-left: -3vw;margin-top:-3vh"></div>
 	<!-- Satellite category dropdown -->
 	<select id="dropdown" style="visibility: hidden;">
 		<option value="0">-- Select an option --</option>
@@ -57,14 +57,11 @@
                     SearchLng = position.coords.longitude;
                     console.log("Latitude: " + SearchLat + "\nLongitude: " + SearchLng + "\nInitializing Leaflet's map...");
                     initMap(SearchLat, SearchLng);
-
-                    // Open the category dropdown automatically
-                    dropdown.focus();
-
                 },
                 error => {
-                    alert("Location access is required for this demo.");
+                    alert("Geolocation error encountered.\nInitializing Signal Hill, Cape Town, 8001.");
                     console.error(error);
+					initMap(-33.915221, 18.404708);
                 },
                 {
                     enableHighAccuracy: true,
@@ -311,8 +308,9 @@
 		========================= */
 		async function fetchSatellites() {
             // Satellite Category 0 = ANY
-            // Defaulting to all satellites due to significantly decreased search radius
             prepareRenderTable();
+			if (SearchLat == 0 || SearchLng == 0)
+			{ SearchLat = -33.915221; SearchLng = 18.404708 }
             const url =
                 `https://roguegamestudio-api.rickeshsingh0.workers.dev/` +
                 `?lat=${SearchLat}&lng=${SearchLng}&cat=0`;
@@ -325,6 +323,11 @@
 
                 const data = await response.json();
                 console.log(data);
+				if (((data.info).toString()).includes("satcount: 0"))
+				{
+					alert("No objects orbiting within 10º in the aerospace of the queried coordinates.")
+					return;
+				}
                 renderTable(data.above);
                 plotSatellitesOnMap(data.above);
 
