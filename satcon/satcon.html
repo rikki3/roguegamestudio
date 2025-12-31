@@ -121,7 +121,7 @@
 		
 
 		// ShowStatus function
-		function showStatus(text, isError=false) {
+		function showStatus(text, showRefresh=false) {
 			// Update status text
 			statusText.textContent = text;
 
@@ -134,7 +134,7 @@
 			showBtn.textContent = "Close";
 
 			// Show refresh button only on error
-			refreshBtn.style.display = isError ? "inline-block" : "none";
+			refreshBtn.style.display = showRefresh ? "inline-block" : "none";
 		}
 
 		// Refresh button logic
@@ -164,22 +164,23 @@
 
         function autoLocateUser() {
             if (!("geolocation" in navigator)) {
-                showStatus("🌐❌Geolocation not supported by this browser.", true);
+                showStatus("🌐❌Geolocation is not supported by this browser.", true);
                 return;
             }
-			showStatus("🌐📌Provide permission to initiate geolocation...");
+			showStatus("🌐📌Grant permission to begin geolocation...");
             navigator.geolocation.getCurrentPosition(
                 position => {
-					showStatus("🌐📌Geolocating...");
+					showStatus("🌐📌Determining your location...");
                     SearchLat = position.coords.latitude;
                     SearchLng = position.coords.longitude;
                     console.log("Latitude: " + SearchLat + "\nLongitude: " + SearchLng + "\nInitializing Leaflet's map...");
+					showStatus("🌐✔️Location approximated! Initializing...");
                     initMap(SearchLat, SearchLng);
                 },
                 error => {
-					showStatus("❌Geolocation error encountered⚠️Initializing default location...🌄Awaiting Signal Hill, Cape Town, 8001 response...", true);
+					showStatus("🌐❌An error occurred while determining your location!", true);
                     console.error(error);
-					initMap(-33.915221, 18.404708);
+					//initMap(-33.915221, 18.404708);
                 },
                 {
                     enableHighAccuracy: true,
@@ -199,7 +200,7 @@
 
                 userMarker = L.marker([lat, lng])
                     .addTo(map)
-                    .bindPopup("Your location")
+                    .bindPopup("You")
                     .openPopup();
 
 				satelliteIcon = L.icon({
@@ -212,7 +213,7 @@
                 map.setView([lat, lng], 13);
                 userMarker.setLatLng([lat, lng]);
             }
-			userMarker.setPopupContent("📌You are here!")
+			userMarker.setPopupContent("")
             fetchSatellites();
         }
 
@@ -247,12 +248,11 @@
 			if (bounds.length > 0) map.fitBounds(bounds, { padding: [50, 50] });
 
 			
-			if (SearchLat == -33.915221 && SearchLng == 18.404708)
-			{
-				showStatus("🌌✔️Queried Signal Hill's aerospace for detected objects orbiting earth.");
-				return
-			}
-			showStatus("🌌✔️Successfully queried your coordinate's aerospace for detected objects orbiting earth.");
+			// if (SearchLat == -33.915221 && SearchLng == 18.404708)
+			// {
+			// 	showStatus("🌌✔️Queried Signal Hill's aerospace for detected objects orbiting earth.");
+			// 	return
+			// }
 		}
 
 		let SearchLat = 0;
@@ -304,7 +304,7 @@
 			const row = document.createElement("tr");
 			const cell = document.createElement("td");
 			cell.colSpan = 7;
-			cell.textContent = "Searching your aerospace for satellites...";
+			cell.textContent = "Searching for satellites...";
 			row.appendChild(cell);
 			tbody.appendChild(row);
 		}
@@ -338,23 +338,33 @@
 
 		
 		async function fetchSatellites() {
+			showStatus("📡🌐Searching for objects orbiting Earth within 10º of your coordinates...");
             prepareRenderTable();
-			if (SearchLat == 0 || SearchLng == 0) { SearchLat = -33.915221; SearchLng = 18.404708; userMarker?.setPopupContent("🌄Signal Hill"); }
+			//if (SearchLat == 0 || SearchLng == 0) { SearchLat = -33.915221; SearchLng = 18.404708; userMarker?.setPopupContent("Signal Hill"); }
             const url = `https://roguegamestudio-api.rickeshsingh0.workers.dev/?lat=${SearchLat}&lng=${SearchLng}&cat=0`;
-
             try {
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const data = await response.json();
-				if (data.info.satcount == 0) {
-					showStatus("❌📌No objects detected orbiting Earth within 10º of the queried coordinate's aerospace...", true);
+				const orbitingObjects = data.info.satcount
+				if (orbitingObjects == 0) {
+					showStatus("❌📌No objects detected orbiting Earth within 10º of your coordinates.", true);
 					return;
 				}
-				showStatus("📡✔️Objects detected orbiting Earth within 10º of the queried coordinate's aerospace.");
+				showStatus("📡✔️Successfully queried Earth's orbit! Please wait...");
                 renderTable(data.above);
                 plotSatellitesOnMap(data.above);
+				if (orbitingObjects == 1) {
+					showStatus("🌌✔️Only " + data.above[0].satname + " has been detected orbiting Earth within 10º of your coordinates.", true);
+				}
+				else if (orbitingObjects == 2) {
+					showStatus("🌌✔️A total of " + orbitingObjects + " objects orbiting Earth were identified near your location.", true);
+				}
+				else if (orbitingObjects >= 3) {
+					showStatus("🌌✔️A total of " + orbitingObjects + " objects orbiting Earth were identified near your location!", true);
+				}
             } catch (error) {
-				showStatus("❌😅 Something strange has gone wrong! 🧭⏰", true);
+				showStatus("❌😅Something strange has gone wrong!🧭⏰", true);
                 console.error("An error occurred during the fetchSatellites() function: ", error);
             }
         }
