@@ -70,12 +70,47 @@
     ></script>
 </head>
 <body style="width: 100vw;height: 100vh;overflow: hidden; position: relative;">
-	<div style="display: flex;align-items: center;width: 100%;font-size: 20px;" id="status-overlay">
-		<span id="status-text">🛰 Searching satellites…</span>
-		<button id="refresh-btn" style="display:none;">↻ Refresh</button>
+	<div id="status-overlay" style="width: 100vw;">
+		<div style="display: flex;align-items: center;width: 100%;font-size: 20px;margin-top: 24px;">
+			<span id="status-text">🛰 Searching satellites…</span>
+			<button id="refresh-btn" style="display:none;">↻ Refresh</button>
+		</div>
+		<div id="coordinate-inputs" style="width:100vw; font-size: 20px;margin-left:2.65%;">
+			<table>
+				<tr>
+					<td colspan="2">
+						Select or search a set of coordinates below to begin:
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Latitude: 
+					</td>
+					<td>
+						<input id="latInput" style="width:96px"/>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Longitude: 
+					</td>
+					<td>
+						<input id="lngInput" style="width:96px"/><br/>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<button id="btn-SelectMapPin">🗺️ Select</button>
+					</td>
+					<td>
+						<button id="btn-Search">🔍 Search</button>
+					</td>
+				</tr>
+			</table>
+		</div>
 	</div>
     <div id="map" style="height: 103vh; width: 103vw;margin-left: -3vw;margin-top:-3vh"></div>
-	<button id="show-overlay-btn" style="font-size: 21px;margin-top:2.25vh;">Hide</button>
+	<button id="show-overlay-btn" style="font-size: 21px;margin-top:24px;margin-right:0.25vw">Hide</button>
 	<!-- Satellite category dropdown -->
 	<select id="dropdown" style="visibility: hidden;">
 		<option value="0">-- Select an option --</option>
@@ -102,6 +137,11 @@
 		const statusText = document.getElementById("status-text");
 		const refreshBtn = document.getElementById("refresh-btn");
 		const showBtn = document.getElementById("show-overlay-btn");
+		const latInput = document.getElementById("latInput");
+		const lngInput = document.getElementById("lngInput");
+		const searchBtn = document.getElementById("btn-Search");
+		const coordinatesDiv = document.getElementById("coordinate-inputs");
+		const selectBtn = document.getElementById("btn-SelectMapPin");
 
 		// Show/Hide button logic
 		showBtn.addEventListener("click", () => {
@@ -110,7 +150,7 @@
 				setTimeout(() => {
 					overlay.style.visibility = "hidden";
 				}, 400);
-				showBtn.textContent = "Status";
+				showBtn.textContent = "Open";
 			} else {
 				overlay.style.visibility = "visible";
 				overlay.style.opacity = 1;
@@ -118,10 +158,91 @@
 			}
 		});
 
+		// Search validation
+		function isValidCoordinates(lat, lon) {
+			return (
+				typeof lat === 'number' &&
+				typeof lon === 'number' &&
+				lat >= -90 && lat <= 90 &&
+				lon >= -180 && lon <= 180
+			);
+		}
+
+		// Search button logic
+		searchBtn.addEventListener("click", () => {
+
+			try {
+				const lat = parseFloat(latInput.value);
+				const lon = parseFloat(lngInput.value); // Assuming you also have a longInput field
+
+				if (isValidCoordinates(lat, lon)) {
+					showStatus("🌐✔️Initializing...", false, false);
+					SearchLat = latInput.value;
+					SearchLng = lngInput.value;
+					initMap(SearchLat, SearchLng);
+				} else {
+					showStatus("📌❌Invalid coordinates...", false, false);
+				}
+			} catch (error) {
+				showStatus("🌐❌An error has occurred...")
+				console.error("Error: ", error.message);
+
+			}
+		});
+
+		// Select button logic
+		selectBtn.addEventListener("click", () => {
+
+			try {
+
+				//TODO: ADD LEAFLET.JS PIN DROP ON MAP AND STORE COORDS IN A CONST
+				showStatus("🗺️📍Click on the map to select coordinates...", false, false);
+
+				// If the map is not initialized, initialize a temporary one for selection
+				if (!map) {
+					map = L.map("map").setView([0, 0], 2);
+
+					L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+						attribution: "&copy; OpenStreetMap contributors"
+					}).addTo(map);
+				}
+
+				const onPick = (e) => {
+					const { lat, lng } = e.latlng;
+
+					latInput.value = lat.toFixed(6);
+					lngInput.value = lng.toFixed(6);
+
+					SearchLat = lat;
+					SearchLng = lng;
+
+					if (userMarker) {
+						userMarker.setLatLng([lat, lng]);
+					} else {
+						userMarker = L.marker([lat, lng]).addTo(map);
+					}
+
+					map.off("click", onPick);
+
+					map.remove();
+					map = null;
+
+					showStatus("🌐✔️Location selected!", false, true);
+					searchBtn.click();
+				};
+
+				map.on("click", onPick);
+
+			} catch (error) {
+				showStatus("🌐❌An error has occurred...")
+				console.error("Error: ", error.message);
+			}
+		});
+
 		
 
 		// ShowStatus function
-		function showStatus(text, showRefresh=false) {
+		function showStatus(text, showRefresh=false, showCoordInputs=false) {
 			// Update status text
 			statusText.textContent = text;
 
@@ -135,23 +256,14 @@
 
 			// Show refresh button only on error
 			refreshBtn.style.display = showRefresh ? "inline-block" : "none";
+
+			// Show coordinates inputs and buttons
+			coordinatesDiv.style.display = showCoordInputs ? "inline-block" : "none";
 		}
 
 		// Refresh button logic
 		refreshBtn.addEventListener("click", async () => {
-			localStorage.clear();
-			sessionStorage.clear();
-			if (window.indexedDB) {
-				const dbs = await indexedDB.databases();
-				dbs.forEach(db => indexedDB.deleteDatabase(db.name));
-			}
-			if ("serviceWorker" in navigator) {
-				const regs = await navigator.serviceWorker.getRegistrations();
-				for (const reg of regs) await reg.unregister();
-			}
-			const url = new URL(window.location.href);
-			url.searchParams.set("_fresh", Date.now());
-			window.location.replace(url.toString());
+			window.location.href="https://roguegamestudio.space/satcon/satcon.html"
 		});
 
         /* =========================
@@ -164,7 +276,7 @@
 
         function autoLocateUser() {
             if (!("geolocation" in navigator)) {
-                showStatus("🌐❌Geolocation is not supported by this browser.", true);
+                showStatus("🌐❌Geolocation is not supported by this browser.", false, true);
                 return;
             }
 			showStatus("🌐📌Grant permission to begin geolocation...");
@@ -173,14 +285,14 @@
 					showStatus("🌐📌Determining your location...");
                     SearchLat = position.coords.latitude;
                     SearchLng = position.coords.longitude;
-                    console.log("Latitude: " + SearchLat + "\nLongitude: " + SearchLng + "\nInitializing Leaflet's map...");
 					showStatus("🌐✔️Location approximated! Initializing...");
                     initMap(SearchLat, SearchLng);
+
+                    console.log("Latitude: " + SearchLat + "\nLongitude: " + SearchLng + "\nInitializing Leaflet's map...");
                 },
                 error => {
-					showStatus("🌐❌An error occurred while determining your location!", true);
+					showStatus("🌐❌An error occurred while determining your location!", false, true);
                     console.error(error);
-					//initMap(-33.915221, 18.404708);
                 },
                 {
                     enableHighAccuracy: true,
@@ -205,9 +317,9 @@
 
 				satelliteIcon = L.icon({
 					iconUrl: 'satellite.png',
-					iconSize: [128, 128],
-					iconAnchor: [64, 64],
-					popupAnchor: [0, -64]
+					iconSize: [96, 96],
+					iconAnchor: [48, 48],
+					popupAnchor: [0, -48]
 				});
             } else {
                 map.setView([lat, lng], 13);
