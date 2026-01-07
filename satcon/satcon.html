@@ -273,6 +273,10 @@
         let userMarker;
         let satelliteLayer;
         let satelliteIcon;
+		let debrisIcon;
+		let rocketBodyIcon;
+		
+		
 
         function autoLocateUser() {
             if (!("geolocation" in navigator)) {
@@ -314,6 +318,20 @@
                     .addTo(map)
                     .bindPopup("You")
                     .openPopup();
+				
+				debrisIcon = L.icon({
+					iconUrl: 'debris.png',
+					iconSize: [96, 96],
+					iconAnchor: [48, 48],
+					popupAnchor: [0, -48]
+				});
+
+				rocketBodyIcon = L.icon({
+					iconUrl: 'rocket_body.png',
+					iconSize: [96, 96],
+					iconAnchor: [48, 48],
+					popupAnchor: [0, -48]
+				});
 
 				satelliteIcon = L.icon({
 					iconUrl: 'satellite.png',
@@ -321,6 +339,7 @@
 					iconAnchor: [48, 48],
 					popupAnchor: [0, -48]
 				});
+
             } else {
                 map.setView([lat, lng], 13);
                 userMarker.setLatLng([lat, lng]);
@@ -328,6 +347,15 @@
 			userMarker.setPopupContent("")
             fetchSatellites();
         }
+
+		function getIconSizeByAltitude(alt) {
+			const minSize = 48;
+			const maxSize = 96;
+			const minAlt = 160;   // km enters low earth orbit
+			const maxAlt = 12800;  // km exists low earth orbit
+			const size = Math.max(minSize, Math.min(maxSize, maxSize - ((alt - minAlt) / (maxAlt - minAlt)) * (maxSize - minSize)));
+			return [size, size];
+		}
 
         function plotSatellitesOnMap(satellites) {
 			if (!map) return;
@@ -339,9 +367,19 @@
 			satellites.forEach(sat => {
 				if (typeof sat.satlat !== "number" || typeof sat.satlng !== "number") return;
 
-				const marker = L.marker([sat.satlat, sat.satlng], { icon: satelliteIcon })
+				
+				const iconSize = getIconSizeByAltitude(sat.satalt);
+				const iconToUse = L.icon({
+					iconUrl: sat.satname?.includes("DEB") ? 'debris.png' : sat.satname?.includes("R/B") ? 'rocket_body.png' : 'satellite.png',
+					iconSize: iconSize,
+					iconAnchor: [iconSize[0] / 2, iconSize[1] / 2],
+					popupAnchor: [0, -iconSize[1] / 2]
+				});
+
+				const marker = L.marker([sat.satlat, sat.satlng], { icon: iconToUse })
 					.bindPopup(`
-						<strong>${sat.satname}</strong><br>
+						<strong>${sat.satname?.includes("DEB") ? "DEBRIS:" : sat.satname?.includes("R/B") ? "ROCKET BODY:" : "SATELLITE:"}</strong><br>
+						<strong>${sat.satname?.includes("DEB") ? sat.satname.replace("DEB", "") : sat.satname?.includes("R/B") ? sat.satname.replace("R/B", "") : sat.satname}</strong><br>
 						Latitude:${sat.satlat}<br>
 						Longitude:${sat.satlng}<br>
 						Altitude: ${sat.satalt.toFixed(1)} km<br><br>
@@ -467,13 +505,13 @@
                 renderTable(data.above);
                 plotSatellitesOnMap(data.above);
 				if (orbitingObjects == 1) {
-					showStatus("🌌✔️Only " + data.above[0].satname + " has been detected orbiting Earth within 10º of your coordinates.", true);
+					showStatus("🌌✔️Only " + data.above[0].satname + " has been detected orbiting Earth within the 10º search radius.", true);
 				}
 				else if (orbitingObjects == 2) {
-					showStatus("🌌✔️A total of " + orbitingObjects + " objects orbiting Earth were identified near your location.", true);
+					showStatus("🌌✔️A total of " + orbitingObjects + " objects orbiting Earth were identified within the 10º search radius.", true);
 				}
 				else if (orbitingObjects >= 3) {
-					showStatus("🌌✔️A total of " + orbitingObjects + " objects orbiting Earth were identified near your location!", true);
+					showStatus("🌌✔️A total of " + orbitingObjects + " objects orbiting Earth were identified within the 10º search radius!", true);
 				}
             } catch (error) {
 				showStatus("❌😅Something strange has gone wrong!🧭⏰", true);
