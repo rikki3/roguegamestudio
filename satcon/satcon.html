@@ -13,11 +13,11 @@
     color: #fff;
     padding: 8px 14px;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 10px;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 
-    opacity: 1;
-    visibility: visible;
+    /* opacity: 1;
+    visibility: visible; */
 
     pointer-events: auto;
     transition: opacity 0.4s ease;
@@ -70,12 +70,12 @@
     ></script>
 </head>
 <body style="width: 100vw;height: 100vh;overflow: hidden; position: relative;">
-	<div id="status-overlay" style="width: 100vw;height: 30%;">
-		<div style="display: flex;align-items: center;width: 100%;font-size: 20px;margin-top: 24px;">
-			<span id="status-text">🛰 Searching satellites…</span>
+	<div id="status-overlay" style="width: 100vw;height: 25%;display: none;">
+		<div style="display: flex;align-items: center;width: 100%;font-size: 16px;margin-top: 24px;">
+			<div id="status-text">🛰 Orbital search pending…</div>
 			<button id="refresh-btn" style="display:none;">↻ Refresh</button>
 		</div>
-		<div id="coordinate-inputs" style="width:100vw; font-size: 20px;margin-left:2.65%;">
+		<div id="coordinate-inputs" style="width:100vw; font-size: 16px;">
 			<table>
 				<tr>
 					<td colspan="2">
@@ -87,7 +87,7 @@
 						Latitude: 
 					</td>
 					<td>
-						<input id="latInput" style="width:96px"/>
+						<input id="latInput" style="width:96px;"/>
 					</td>
 				</tr>
 				<tr>
@@ -95,12 +95,12 @@
 						Longitude: 
 					</td>
 					<td>
-						<input id="lngInput" style="width:96px"/><br/>
+						<input id="lngInput" style="width:96px;"/><br/>
 					</td>
 				</tr>
 				<tr>
 					<td>
-						<button id="btn-SelectMapPin">🗺️ Select</button>
+						<button id="btn-SelectMapPin" style="margin-left:0vw;">🗺️ Select</button>
 					</td>
 					<td>
 						<button id="btn-Search">🔍 Search</button>
@@ -110,7 +110,7 @@
 		</div>
 	</div>
     <div id="map" style="height: 103vh; width: 103vw;margin-left: -3vw;margin-top:-3vh"></div>
-	<button id="show-overlay-btn" style="font-size: 21px;margin-top:24px;margin-right:0.25vw">Hide</button>
+	<button id="show-overlay-btn" style="font-size: 18px;margin-top:24px;margin-right:0.25vw;display: none;">Close</button>
 	<!-- Satellite category dropdown -->
 	<select id="dropdown" style="visibility: hidden;">
 		<option value="0">-- Select an option --</option>
@@ -181,10 +181,10 @@
 					SearchLng = lngInput.value;
 					initMap(SearchLat, SearchLng);
 				} else {
-					showStatus("📌❌Invalid coordinates...", false, false);
+					showStatus("📌❌Invalid coordinates...", false, true);
 				}
 			} catch (error) {
-				showStatus("🌐❌An error has occurred...")
+				showStatus("🌐❌An error has occurred...", true, false)
 				console.error("Error: ", error.message);
 
 			}
@@ -194,8 +194,7 @@
 		selectBtn.addEventListener("click", () => {
 
 			try {
-
-				//TODO: ADD LEAFLET.JS PIN DROP ON MAP AND STORE COORDS IN A CONST
+				showBtn.style.display = "none";
 				showStatus("🗺️📍Click on the map to select coordinates...", false, false);
 
 				// If the map is not initialized, initialize a temporary one for selection
@@ -241,6 +240,11 @@
 
 		
 
+		// Helper to detect Android user agents
+		function isAndroid() {
+			return /Android/i.test(navigator.userAgent);
+		}
+
 		// ShowStatus function
 		function showStatus(text, showRefresh=false, showCoordInputs=false) {
 			// Update status text
@@ -259,7 +263,13 @@
 
 			// Show coordinates inputs and buttons
 			coordinatesDiv.style.display = showCoordInputs ? "inline-block" : "none";
-		}
+			// Apply Android-only left margin when coordinates are visible
+			if (isAndroid() && showCoordInputs) {
+				coordinatesDiv.style.marginLeft = "-1.5vw";
+			} else {
+				coordinatesDiv.style.marginLeft = "";
+			}
+		} 
 
 		// Refresh button logic
 		refreshBtn.addEventListener("click", async () => {
@@ -295,7 +305,15 @@
                     console.log("Latitude: " + SearchLat + "\nLongitude: " + SearchLng + "\nInitializing Leaflet's map...");
                 },
                 error => {
-					showStatus("🌐❌An error occurred while determining your location!", false, true);
+					showStatus("🌐❌An error occurred while determining your location!", true, true);
+					if (isAndroid()) {
+						refreshBtn.style.marginBottom = "-26.5vh";
+						refreshBtn.style.marginRight = "2vh";
+					} else {
+						// Reset any Android-only margins for other platforms
+						refreshBtn.style.marginBottom = "";
+						refreshBtn.style.marginRight = "";
+					}
                     console.error(error);
                 },
                 {
@@ -444,7 +462,19 @@
 
         window.addEventListener("load", () => {
             populateCategories();
-            autoLocateUser();
+			latInput.value = "";
+			lngInput.value = "";
+			if (isAndroid()) {
+				overlay.style.height = "25%";
+				showBtn.style.marginTop = "18.5px";
+			} else {
+				overlay.style.height = "18%";
+			}
+			if (confirm("Search Earth's orbit near you?")) {
+				autoLocateUser();
+			}
+			overlay.style.display = "";
+			showBtn.style.display = "";
         });
 
 		function prepareRenderTable() {
@@ -455,6 +485,7 @@
 			const cell = document.createElement("td");
 			cell.colSpan = 7;
 			cell.textContent = "Searching for satellites...";
+			
 			row.appendChild(cell);
 			tbody.appendChild(row);
 		}
@@ -488,7 +519,8 @@
 
 		
 		async function fetchSatellites() {
-			showStatus("📡🌐Searching for objects orbiting Earth within 10º of your coordinates...");
+			showStatus("📡🌐Searching for objects orbiting Earth within 10º of the coordinates...");
+			showBtn.style.display = "none";
             prepareRenderTable();
 			//if (SearchLat == 0 || SearchLng == 0) { SearchLat = -33.915221; SearchLng = 18.404708; userMarker?.setPopupContent("Signal Hill"); }
             const url = `https://roguegamestudio-api.rickeshsingh0.workers.dev/?lat=${SearchLat}&lng=${SearchLng}&cat=0`;
@@ -498,22 +530,66 @@
                 const data = await response.json();
 				const orbitingObjects = data.info.satcount
 				if (orbitingObjects == 0) {
-					showStatus("❌📌No objects detected orbiting Earth within 10º of your coordinates.", true);
+					showStatus("❌📌No objects detected orbiting Earth within 10º of the coordinates.", true, true);
 					return;
 				}
 				showStatus("📡✔️Successfully queried Earth's orbit! Please wait...");
                 renderTable(data.above);
                 plotSatellitesOnMap(data.above);
+
+				let satellitesCount = 0;
+				let debrisCount = 0;
+				let rocketBodyCount = 0;
+
+				data.above.forEach(sat => {
+					if (!sat.satname) return;
+					if (sat.satname.includes("DEB")) debrisCount++;
+					else if (sat.satname.includes("R/B")) rocketBodyCount++;
+					else satellitesCount++;
+				});
+
+				const totalObjects = satellitesCount + debrisCount + rocketBodyCount;
+
 				if (orbitingObjects == 1) {
-					showStatus("🌌✔️Only " + data.above[0].satname + " has been detected orbiting Earth within the 10º search radius.", true);
-				}
+					let typeLine = "";
+					if (satellitesCount === 1) typeLine = "Satellite: x1";
+					else if (debrisCount === 1) typeLine = "Debris: x1";
+					else if (rocketBodyCount === 1) typeLine = "Rocket Body: x1";
+					showStatus("", true);
+					document.getElementById("status-text").innerHTML = "🌌✔️Only " + data.above.first.satname + " has been detected orbiting Earth within the 10º search radius.<br/>" + typeLine;
+					if (isAndroid()) {
+						refreshBtn.style.marginTop = "-3vh";
+						refreshBtn.style.marginRight = "1.85vh";
+					}
+					else {
+						refreshBtn.style.marginTop = "-6vh";
+					}
+				} 
 				else if (orbitingObjects == 2) {
-					showStatus("🌌✔️A total of " + orbitingObjects + " objects orbiting Earth were identified within the 10º search radius.", true);
-				}
+					showStatus("", true);
+					document.getElementById("status-text").innerHTML = "🌌✔️A total of " + orbitingObjects + " objects orbiting Earth were detected within the 10º search radius.<br/>Satellites: x" + satellitesCount + "<br/>Debris: x" + debrisCount + "<br/>Rocket Bodies: x" + rocketBodyCount;
+					if (isAndroid()) {
+						refreshBtn.style.marginTop = "-3vh";
+						refreshBtn.style.marginRight = "1.85vh";
+					}
+					else {
+						refreshBtn.style.marginTop = "-6vh";
+					}
+				} 
 				else if (orbitingObjects >= 3) {
-					showStatus("🌌✔️A total of " + orbitingObjects + " objects orbiting Earth were identified within the 10º search radius!", true);
+					showStatus("", true);
+					document.getElementById("status-text").innerHTML = "🌌✔️A total of " + orbitingObjects + " objects orbiting Earth were detected within the 10º search radius!<br/>Satellites: x" + satellitesCount + "<br/>Debris: x" + debrisCount + "<br/>Rocket Bodies: x" + rocketBodyCount;
+					if (isAndroid()) {
+						refreshBtn.style.marginTop = "-3vh";
+						refreshBtn.style.marginRight = "1.85vh";
+					}
+					else {
+						refreshBtn.style.marginTop = "-6vh";
+					}
 				}
+				showBtn.style.display = ""; 
             } catch (error) {
+				showBtn.style.display = "";
 				showStatus("❌😅Something strange has gone wrong!🧭⏰", true);
                 console.error("An error occurred during the fetchSatellites() function: ", error);
             }
