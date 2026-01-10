@@ -240,9 +240,9 @@
 
 		
 
-		// Helper to detect Android user agents
-		function isAndroid() {
-			return /Android/i.test(navigator.userAgent);
+		// Helper to detect Android or iPhone user agents
+		function isMobile() {
+			return /Android|iPhone/i.test(navigator.userAgent);
 		}
 
 		// ShowStatus function
@@ -264,7 +264,7 @@
 			// Show coordinates inputs and buttons
 			coordinatesDiv.style.display = showCoordInputs ? "inline-block" : "none";
 			// Apply Android-only left margin when coordinates are visible
-			if (isAndroid() && showCoordInputs) {
+			if (isMobile() && showCoordInputs) {
 				coordinatesDiv.style.marginLeft = "-1.5vw";
 			} else {
 				coordinatesDiv.style.marginLeft = "";
@@ -306,7 +306,7 @@
                 },
                 error => {
 					showStatus("🌐❌An error occurred while determining your location!", true, true);
-					if (isAndroid()) {
+					if (isMobile()) {
 						refreshBtn.style.marginBottom = "-26.5vh";
 						refreshBtn.style.marginRight = "2vh";
 					} else {
@@ -464,7 +464,7 @@
             populateCategories();
 			latInput.value = "";
 			lngInput.value = "";
-			if (isAndroid()) {
+			if (isMobile()) {
 				overlay.style.height = "25%";
 				showBtn.style.marginTop = "18.5px";
 			} else {
@@ -557,7 +557,7 @@
 					else if (rocketBodyCount === 1) typeLine = "Rocket Body: x1";
 					showStatus("", true);
 					document.getElementById("status-text").innerHTML = "🌌✔️Only " + data.above.first.satname + " has been detected orbiting Earth within the 10º search radius.<br/>" + typeLine;
-					if (isAndroid()) {
+					if (isMobile()) {
 						refreshBtn.style.marginTop = "-3vh";
 						refreshBtn.style.marginRight = "1.85vh";
 					}
@@ -568,7 +568,7 @@
 				else if (orbitingObjects == 2) {
 					showStatus("", true);
 					document.getElementById("status-text").innerHTML = "🌌✔️A total of " + orbitingObjects + " objects orbiting Earth were detected within the 10º search radius.<br/>Satellites: x" + satellitesCount + "<br/>Debris: x" + debrisCount + "<br/>Rocket Bodies: x" + rocketBodyCount;
-					if (isAndroid()) {
+					if (isMobile()) {
 						refreshBtn.style.marginTop = "-3vh";
 						refreshBtn.style.marginRight = "1.85vh";
 					}
@@ -579,7 +579,7 @@
 				else if (orbitingObjects >= 3) {
 					showStatus("", true);
 					document.getElementById("status-text").innerHTML = "🌌✔️A total of " + orbitingObjects + " objects orbiting Earth were detected within the 10º search radius!<br/>Satellites: x" + satellitesCount + "<br/>Debris: x" + debrisCount + "<br/>Rocket Bodies: x" + rocketBodyCount;
-					if (isAndroid()) {
+					if (isMobile()) {
 						refreshBtn.style.marginTop = "-3vh";
 						refreshBtn.style.marginRight = "1.85vh";
 					}
