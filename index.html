@@ -15,6 +15,7 @@
     <br/><br/>
     <table>
         <tr>
+            <!-- PROJECTS -->
             <td valign="top">
                 <div style="font-size: 45px;">
                     Projects:
@@ -54,21 +55,79 @@
                 <br/><br/>
             </td>
             <td style="background-color: black;">
-
             </td>
+            <!-- OPEN-SOURCE -->
             <td valign="top" style="max-width: 500px;width: 500px;">
+                <div style="font-size: 38px;">
+                    GitHub Open-Source<br/>
+                    Contributions:
+                </div>
+                <div>
+                    <h1>Solidus</h1>
+                    <img src="images\foss\solidus.png" width="128" height="128">
+                    <h3>Create "visible by customer' checkbox to orders admin view</h3>
+                    <label>
+                        Issue: <a href="https://github.com/solidusio/solidus/issues/6365">#6467</a><br/>
+                        I have removed the redundant libvips from the build packages as build inherits from base which already included the library.<br>
+                        This prevents a duplicated install entry in the Dockerfile that is generated.<br>
+                        Status: <a href="https://github.com/solidusio/solidus/pull/6467">Open</a>
+                    </label>
+                </div>
+                <div>
+                    <h1>Rails</h1>                    
+                    <img src="images\foss\rails.png" width="256" height="128">
+                    <h3>Dockerfile: duplicated libvips install</h3>
+                    <label>
+                        Issue: <a href="https://github.com/rails/rails/issues/57237">#57237</a><br/>
+                        I have removed the redundant libvips from the build packages as build inherits from base which already included the library.<br>
+                        This prevents a duplicated install entry in the Dockerfile that is generated.<br>
+                        Status: <a href="https://github.com/rails/rails/pull/57238">Merged</a>
+                    </label>
+                </div>
+                <div>
+                    <h1>AutoHotkey</h1>
+                    <img src="images\foss\ahk.png" width="128" height="128">
+                    <h3>Typo fixes</h3>
+                    <label>
+                        source/window.cpp contained several comments with typos.<br/>
+                        I have fixed each typo I identified.<br>
+                        Status: <a href="https://github.com/AutoHotkey/AutoHotkey/pull/357#event-24417039845">Merged</a>
+                    </label>
+                </div>
+            </td>
+            <!-- NEWS -->
+            <td style="background-color: black;">
+            </td>
+            <td valign="top" style="max-width: 800px;width: 800px;">
                 <div style="font-size: 45px;">
                     In Other News:
                 </div>
+                <h2>17:40PM 27/04/2026 - Testing scalability of a questing and dialogue system!</h2>
+                <h3>Ruby on Rails has been great, but back to some Unity!</h3>
+                <label>
+                    It's been extremely fun trying to build a scalable quest and dialogue system in C# for Unity.<br/>
+                    If I go want to go with the method below, I'll probably need a separate class tracking each individual quest...<br/>
+                    <img src="images\notepad01.png" width="500" height="250"><br/>
+                    Speaking of Unity, I recently was able to successfully weight paint a set of custom armor for Skyrim.<br/>
+                    This means the armor now accurately moves with the player, by using the armature of bones from the skeleton.nif<br/>
+                    <a href="https://www.nexusmods.com/skyrimspecialedition/mods/175440"><img src="images\skyrim01.png" width="250" height="500"></a><br/>
+                    The version currently on nexus does not yet include the custom armor.<br/>
+                    Most of my mods are requests by the community from the forum's mod ideas.<br/>
+                    Check out the mod requests I've done over on Nexus Mods below:<br/>
+                    <a href="https://www.nexusmods.com/profile/darsansingh3/mods"><img src="https://avatars.githubusercontent.com/u/13456496?s=280&v=4" style="width: 128px; height: 128px;"></a>
+                </label>
+                <img></img>
+
+                <br/>
                 <h2>12:58PM 24/04/2026 - I am getting started with Ruby on Rails.</h2>
                 <h3>I've begun with the Ruby on Rails `Getting Started` guide in the official docs!</h3>
                 <h4>Click <a href="https://guides.rubyonrails.org/getting_started.html#adding-authentication">here</a> for the guide. You can read more about it below.</h4>
-                <img src="images\rubyonrails02.png" width="500" height="500">
+                <img src="images\rubyonrails02.png" width="500" height="250"><br/>
                 <label>
                     No difficulties were encountered in the setup, and the guide takes everything step by step, ensuring you actually comprehend the logic behind 'the Ruby way' which makes subsequent steps not only easier than if you just skimming the guide, but also immediately lets you see and understand how the Ruby way makes you develop more efficiently and as thus, is the best way. This methodologically has been echoed throughout the `Getting Started` guide, and it is even prefaced that this is a core assumption upon which Ruby on Rails is built.
                 </label>
                 <h3>I made it to Chapter 11 but introduced errors in Chapter 10...</h3>
-                <img src="images\rubyonrails01.png" width="500" height="500">
+                <img src="images\rubyonrails01.png" width="500" height="250"><br/>
                 <label>
                     Why is the controller passing a null value to the model? Is that the right question?
                     <br/>
@@ -78,13 +137,13 @@
                 <h2>08:41PM 10/03/2026 - Automation Engine Debut</h2>
                 <h3>I created an automation engine for global lead generaion!</h3>
                 <h4>You can read more about it below.</h4>
-                <img src="images\automation_engine.png" width="500" height="500">
-                </img>
+                <img src="images\automation_engine.png" width="500" height="250">
+                </img><br/>
                 <label>
                     The code for this system is not public and remains unpublished.<br/>It's definitely in the very early stages, and requires a bit more polish to consider production ready. As a proof of concept, it has proven itself to be functional in my own testing, resulting in a conversation with a real prospective client. What it does is, it let's you enter a city and country combination in `Discover` then search (currently hardcoded) categories of businesses in that location using Brave, Startpage and/or DuckDuckGo then using a category template, draft a personalised email. It does not automatically send emails, rather just drafts one based on a template and the scraped data. You can then head into `Lead Review` and see the businesses it found, and edit any information that was incorrectly scrapped, view the drafted email and edit it. This email is drafted by a template based on the industry with the company details populated accordingly. If you've contacted one of the businesses located, you can mark it as such, and then click 'Contacted' to move all marked for contact to the `Contacted` page. Upon closing a deal with a contacted business, in the 'Client' column, you can click the button and confirm to move that business to the `Clients` page where the revenue from said client can be updated.
                 </label>
-                <img src="images\automation_engine2.png" width="500" height="500">
-                </img>
+                <img src="images\automation_engine2.png" width="500" height="250">
+                </img><br/>
                 <label>
                     While developing this system, I tested it and reached out to about 20-40 companies in Cape Town, South Africa. I decided to update this exact website you're reading this article on, to what you see in the image above. That would be the landing page for this website if I was to be actively making use of the Automation Engine system detailed herein.
                 </label>
